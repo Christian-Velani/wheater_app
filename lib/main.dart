@@ -12,14 +12,11 @@ const temperatureStyle = TextStyle(
   fontSize: 64,
   color: Colors.white,
   fontWeight: FontWeight.w500,
-  shadows: [ Shadow( color: Color.fromRGBO(0, 0, 0, 0.25), offset: Offset(4, 4))],
+  shadows: [Shadow(color: Color.fromRGBO(0, 0, 0, 0.25), offset: Offset(4, 4))],
 );
 
-const iconStyle = TextStyle(
-  fontSize: 14,
-  color: Colors.white,
-  fontWeight: FontWeight.w500
-);
+const iconStyle =
+    TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500);
 
 class WheaterApp extends StatelessWidget {
   @override
@@ -40,12 +37,34 @@ class WheaterApp extends StatelessWidget {
               Text("Ensolarado", style: titleStyle),
               Text("33°", style: temperatureStyle),
               Container(
-                  margin: EdgeInsets.only(top: 71),
-                  child: Column(children: [
-                    Image.asset('images/humidity.png'),
-                    Text("Humidity", style: iconStyle),
-                    Text("52%",  style: iconStyle),
-                  ])),
+                margin: EdgeInsets.only(top: 71),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      children: [
+                        Image.asset('images/humidity.png'),
+                        Text("Humidity", style: iconStyle),
+                        Text("52%", style: iconStyle),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Image.asset('images/wind.png'),
+                        Text("Wind", style: iconStyle),
+                        Text("19km/h", style: iconStyle),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Image.asset('images/feels_like.png'),
+                        Text("Feels Like", style: iconStyle),
+                        Text("24", style: iconStyle),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
