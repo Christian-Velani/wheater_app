@@ -2,86 +2,109 @@
 
 import 'package:flutter/material.dart';
 import 'style.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
 
 void main() {
   runApp(WheaterApp());
 }
 
 class WheaterApp extends StatelessWidget {
+
+  Future<Map<String, dynamic>?> loadWeatherData() async {
+
+    var queryParams = {
+      "key": "81134a81c96740db958105843232808",
+      "q":"-20.8,-49.38", // TODO: Obter os dados de localização do dispositivo.
+      "lang": "pt",
+    };
+
+    var url = 
+    Uri.https("api.weatherapi.com", "/v1/forecast.json", queryParams);
+
+    var response = await http.get(url);
+    print(response.statusCode);
+    if(response.statusCode == 200) {
+      var json = convert.jsonDecode(response.body) as Map<String, dynamic>;
+      return json;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Color(0xFF255AF4),
-        body: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text("São José do Rio Preto", style: titleStyle),
-              Column(
+        body: FutureBuilder<Map<String, dynamic>?>(
+          future: loadWeatherData(),
+          builder: (context, snapshot) {
+
+            if(!snapshot.hasData) {
+              return CircularProgressIndicator();
+            }
+
+            var dados = snapshot.data!;
+            var forecastday = dados['forecast']['forecastday'][0]['hour'] as List<dynamic>;
+
+            return SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Container(
-                    child: Image.asset('images/01_sunny_color.png'),
-                    width: 96,
-                    height: 96,
-                    margin: EdgeInsets.fromLTRB(0, 0, 0, 24),
-                  ),
-                  Text("Ensolarado", style: titleStyle),
-                  Text("33°", style: temperatureStyle),
-                ],
-              ),
-              Container(
-                // margin: EdgeInsets.only(top: 71),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        Image.asset('images/humidity.png'),
-                        Text("Humidity", style: iconStyle),
-                        Text("52%", style: iconStyle),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Image.asset('images/wind.png'),
-                        Text("Wind", style: iconStyle),
-                        Text("19km/h", style: iconStyle),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Image.asset('images/feels_like.png'),
-                        Text("Feels Like", style: iconStyle),
-                        Text("24", style: iconStyle),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                height: 100,
-                // margin: EdgeInsets.only(top: 80),
-                child: Expanded(
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
+                  Text(dados['location']['name'], style: titleStyle),
+                  Column(
                     children: [
-                      ForecastDay("Now", "nublado", 19),
-                      ForecastDay("10 AM", "nublado", 19),
-                      ForecastDay("11 AM", "sol_nublado", 18),
-                      ForecastDay("12 AM", "sol_nublado", 18),
-                      ForecastDay("13 PM", "chuva", 14),
-                      ForecastDay("14 PM", "nublado", 19),
-                      ForecastDay("15 PM", "nublado", 19),
-                      ForecastDay("16 PM", "nublado", 19),
-                      ForecastDay("17 PM", "nublado", 19),
-                      ForecastDay("18 PM", "nublado", 19),
+                      Container(
+                        child: Image.asset('images/01_sunny_color.png'),
+                        width: 96,
+                        height: 96,
+                        margin: EdgeInsets.fromLTRB(0, 0, 0, 24),
+                      ),
+                      Text(dados['current']['condition']['text'], style: titleStyle),
+                      Text("${dados['current']['temp_c']}°C", style: temperatureStyle),
                     ],
                   ),
-                ),
+                  Container(
+                    // margin: EdgeInsets.only(top: 71),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          children: [
+                            Image.asset('images/humidity.png'),
+                            Text("Humidity", style: iconStyle),
+                            Text("${dados['current']['humidity']}%", style: iconStyle),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Image.asset('images/wind.png'),
+                            Text("Wind", style: iconStyle),
+                            Text("${dados['current']['wind_kph']}km/h", style: iconStyle),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Image.asset('images/feels_like.png'),
+                            Text("Feels Like", style: iconStyle),
+                            Text("${dados['current']['feelslike_c']}°C", style: iconStyle),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 100,
+                    // margin: EdgeInsets.only(top: 80),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: forecastday.map((item) => 
+                        ForecastDay(item['time_epoch'], "chuva", item['temp_c'])).toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          }
         ),
       ),
     );
@@ -89,11 +112,15 @@ class WheaterApp extends StatelessWidget {
 }
 
 class ForecastDay extends StatelessWidget {
-  String hour;
+  int timeEpoch;
   String image;
   double temperature;
+  String? hour;
 
-  ForecastDay(this.hour, this.image, this.temperature);
+  ForecastDay(this.timeEpoch, this.image, this.temperature) {
+    var data = DateTime.fromMillisecondsSinceEpoch(timeEpoch);
+    this.hour = data.hour.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +130,7 @@ class ForecastDay extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(hour, style: hourStyle),
+          Text(hour!, style: hourStyle),
           Image.asset('images/$image.png', width: 36, height: 36),
           Text("$temperature°", style: hourTemperatureStyle)
         ],
