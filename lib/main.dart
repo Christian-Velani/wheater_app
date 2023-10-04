@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'style.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
+import 'package:geolocator/geolocator.dart';
 
 void main() {
   runApp(WheaterApp());
@@ -13,10 +14,11 @@ class WheaterApp extends StatelessWidget {
   Future<Map<String, dynamic>?> loadWeatherData() async {
     var queryParams = {
       "key": "81134a81c96740db958105843232808",
-      "q":
-          "-20.8,-49.38", // TODO: Obter os dados de localização do dispositivo.
       "lang": "pt",
     };
+    Position location = await Geolocator.getCurrentPosition();
+
+    queryParams['q'] = "${location.latitude},${location.longitude}";
 
     var url = Uri.https("api.weatherapi.com", "/v1/forecast.json", queryParams);
 
