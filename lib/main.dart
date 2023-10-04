@@ -10,21 +10,19 @@ void main() {
 }
 
 class WheaterApp extends StatelessWidget {
-
   Future<Map<String, dynamic>?> loadWeatherData() async {
-
     var queryParams = {
       "key": "81134a81c96740db958105843232808",
-      "q":"-20.8,-49.38", // TODO: Obter os dados de localização do dispositivo.
+      "q":
+          "-20.8,-49.38", // TODO: Obter os dados de localização do dispositivo.
       "lang": "pt",
     };
 
-    var url = 
-    Uri.https("api.weatherapi.com", "/v1/forecast.json", queryParams);
+    var url = Uri.https("api.weatherapi.com", "/v1/forecast.json", queryParams);
 
     var response = await http.get(url);
     print(response.statusCode);
-    if(response.statusCode == 200) {
+    if (response.statusCode == 200) {
       var json = convert.jsonDecode(response.body) as Map<String, dynamic>;
       return json;
     }
@@ -36,76 +34,82 @@ class WheaterApp extends StatelessWidget {
       home: Scaffold(
         backgroundColor: Color(0xFF255AF4),
         body: FutureBuilder<Map<String, dynamic>?>(
-          future: loadWeatherData(),
-          builder: (context, snapshot) {
+            future: loadWeatherData(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return CircularProgressIndicator();
+              }
 
-            if(!snapshot.hasData) {
-              return CircularProgressIndicator();
-            }
+              var dados = snapshot.data!;
+              var forecastday =
+                  dados['forecast']['forecastday'][0]['hour'] as List<dynamic>;
 
-            var dados = snapshot.data!;
-            var forecastday = dados['forecast']['forecastday'][0]['hour'] as List<dynamic>;
-
-            return SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(dados['location']['name'], style: titleStyle),
-                  Column(
-                    children: [
-                      Container(
-                        child: Image.asset('images/01_sunny_color.png'),
-                        width: 96,
-                        height: 96,
-                        margin: EdgeInsets.fromLTRB(0, 0, 0, 24),
-                      ),
-                      Text(dados['current']['condition']['text'], style: titleStyle),
-                      Text("${dados['current']['temp_c']}°C", style: temperatureStyle),
-                    ],
-                  ),
-                  Container(
-                    // margin: EdgeInsets.only(top: 71),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              return SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Text(dados['location']['name'], style: titleStyle),
+                    Column(
                       children: [
-                        Column(
-                          children: [
-                            Image.asset('images/humidity.png'),
-                            Text("Humidity", style: iconStyle),
-                            Text("${dados['current']['humidity']}%", style: iconStyle),
-                          ],
+                        Container(
+                          child: Image.asset('images/01_sunny_color.png'),
+                          width: 96,
+                          height: 96,
+                          margin: EdgeInsets.fromLTRB(0, 0, 0, 24),
                         ),
-                        Column(
-                          children: [
-                            Image.asset('images/wind.png'),
-                            Text("Wind", style: iconStyle),
-                            Text("${dados['current']['wind_kph']}km/h", style: iconStyle),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Image.asset('images/feels_like.png'),
-                            Text("Feels Like", style: iconStyle),
-                            Text("${dados['current']['feelslike_c']}°C", style: iconStyle),
-                          ],
-                        ),
+                        Text(dados['current']['condition']['text'],
+                            style: titleStyle),
+                        Text("${dados['current']['temp_c']}°C",
+                            style: temperatureStyle),
                       ],
                     ),
-                  ),
-                  Container(
-                    height: 100,
-                    // margin: EdgeInsets.only(top: 80),
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: forecastday.map((item) => 
-                        ForecastDay(item['time_epoch'], "chuva", item['temp_c'])).toList(),
+                    Container(
+                      // margin: EdgeInsets.only(top: 71),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Column(
+                            children: [
+                              Image.asset('images/humidity.png'),
+                              Text("Humidity", style: iconStyle),
+                              Text("${dados['current']['humidity']}%",
+                                  style: iconStyle),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Image.asset('images/wind.png'),
+                              Text("Wind", style: iconStyle),
+                              Text("${dados['current']['wind_kph']}km/h",
+                                  style: iconStyle),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Image.asset('images/feels_like.png'),
+                              Text("Feels Like", style: iconStyle),
+                              Text("${dados['current']['feelslike_c']}°C",
+                                  style: iconStyle),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }
-        ),
+                    Container(
+                      height: 100,
+                      // margin: EdgeInsets.only(top: 80),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: forecastday
+                            .map((item) => ForecastDay(
+                                item['time_epoch'], "chuva", item['temp_c']))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
       ),
     );
   }
